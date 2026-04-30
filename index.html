@@ -804,8 +804,8 @@ async function handleSubmit() {
 ────────────────────────────────────────────── */
 async function main() {
     // ── 配置检查 ──
-    if (!CONFIG.APP_ID || !CONFIG.APP_SECRET || !CONFIG.REDIRECT_URI ||
-        !CONFIG.APP_TOKEN || !CONFIG.TABLE_ID) {
+    if (!CONFIG.APP_ID || !CONFIG.REDIRECT_URI ||
+    !CONFIG.APP_TOKEN || !CONFIG.TABLE_ID) {
         showError('Page not configured. Please ask your administrator to fill in all required fields in the CONFIG section of the HTML file.');
         return;
     }
