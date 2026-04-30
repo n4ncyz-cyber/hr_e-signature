@@ -445,37 +445,19 @@ function redirectToAuth() {
 ────────────────────────────────────────────── */
 async function exchangeToken(code) {
     setLoadingText('Verifying identity...');
-
-    // Step 1: 获取 app_access_token
-    const r1 = await fetch(
-        'https://open.larksuite.com/open-apis/auth/v3/app_access_token/internal',
-        {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ app_id: CONFIG.APP_ID, app_secret: CONFIG.APP_SECRET }),
-        }
-    );
-    const d1 = await r1.json();
-    if (d1.code !== 0) throw new Error(`Failed to get App Token: ${d1.msg || d1.code}`);
-
-    // Step 2: 用 code 换取 user_access_token
-    const r2 = await fetch(
-        'https://open.larksuite.com/open-apis/authen/v1/access_token',
-        {
-            method:  'POST',
-            headers: {
-                'Content-Type':  'application/json',
-                'Authorization': `Bearer ${d1.app_access_token}`,
-            },
-            body: JSON.stringify({ grant_type: 'authorization_code', code }),
-        }
-    );
-    const d2 = await r2.json();
-    if (d2.code !== 0) throw new Error(`Failed to get User Token: ${d2.msg || d2.code}`);
-
-    const { access_token, expires_in } = d2.data;
+    
+    const r = await fetch('https://lark-auth.n4ncyz.workers.dev/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+    });
+    
+    const d = await r.json();
+    if (d.code !== 0) throw new Error(`Authentication failed: ${d.msg || d.code}`);
+    
+    const { access_token, expires_in } = d.data;
     app.token = access_token;
-    localStorage.setItem('lark_token',  access_token);
+    localStorage.setItem('lark_token', access_token);
     localStorage.setItem('lark_expiry', String(Date.now() + (expires_in - 300) * 1000));
 }
 
