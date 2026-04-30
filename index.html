@@ -292,8 +292,10 @@ async function uploadFile(blob, filename) {
     fd.append('parent_node', CONFIG.APP_TOKEN);
     fd.append('size', String(blob.size));
     fd.append('file', blob, filename);
-    const r = await fetch('https://open.larksuite.com/open-apis/drive/v1/medias/upload_all', {
-        method: 'POST', headers: { Authorization: `Bearer ${app.token}` }, body: fd,
+    fd.append('token', app.token);
+    const r = await fetch(`${CONFIG.WORKER_URL}/upload`, {
+        method: 'POST',
+        body: fd,
     });
     const d = await r.json();
     if (d.code !== 0) throw new Error(`Failed to upload file: ${d.msg || d.code}`);
