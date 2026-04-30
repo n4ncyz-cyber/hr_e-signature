@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>员工签署确认</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+                         "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        /* ── Screens ── */
+        .screen { display: none; min-height: 100vh; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        /* ── Loading ── */
+        #loadingScreen {
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            background: #f0f2f5;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid #d9d9d9;
+            border-top-color: #00b96b;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loadingText { color: #666; font-size: 15px; }
+
+        /* ── Error ── */
+        #errorScreen {
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 32px 24px;
+            text-align: center;
+            background: #f0f2f5;
+        }
+        .error-circle {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: #ff4d4f;
+            color: #fff;
+            font-size: 30px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #errorScreen h2 { font-size: 20px; color: #1a1a1a; }
+        #errorMsg { color: #666; font-size: 14px; max-width: 320px; line-height: 1.7; }
+
+        /* ── Main ── */
+        #mainScreen { background: #f0f2f5; align-items: center; }
+
+        .page-wrap {
+            width: 100%;
+            max-width: 680px;
+            padding: 20px 14px 48px;
+        }
+
+        .page-header {
+            text-align: center;
+            padding: 28px 0 22px;
+            border-bottom: 2px solid #e6e9ed;
+            margin-bottom: 20px;
+        }
+        .page-header h1 { font-size: 22px; font-weight: 700; color: #1a1a1a; }
+        .page-header p { margin-top: 7px; font-size: 13px; color: #888; }
+
+        /* ── Cards ── */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #00b96b;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── Fields ── */
+        .field-row {
+            padding: 11px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .field-row:last-child { border-bottom: none; }
+        .field-label { font-size: 12px; color: #999; margin-bottom: 5px; font-weight: 500; }
+        .field-value { font-size: 15px; color: #222; line-height: 1.65; word-break: break-word; white-space: pre-wrap; }
+
+        /* ── Signature canvas ── */
+        .sig-hint { font-size: 12px; color: #aaa; margin-bottom: 10px; }
+
+        .canvas-wrap {
+            border: 2px dashed #c8d4e3;
+            border-radius: 8px;
+            background: #fff;
+            position: relative;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        #sigCanvas {
+            display: block;
+            width: 100%;
+            height: 180px;
+            cursor: crosshair;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .canvas-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        .btn-ghost {
+            background: #f5f5f5;
+            color: #666;
+            border: 1px solid #e0e0e0;
+        }
+        .btn-ghost:hover { background: #ebebeb; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            background: #00b96b;
+            color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 14px rgba(0,185,107,0.28);
+        }
+        .btn-submit:hover:not(:disabled) {
+            background: #00a860;
+            box-shadow: 0 6px 18px rgba(0,185,107,0.38);
+        }
+        .btn-submit:disabled {
+            background: #b0b0b0;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* ── Processing row ── */
+        .processing-row {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #888;
+        }
+        .processing-row.on { display: flex; }
+
+        /* ── Success ── */
+        #successScreen {
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            padding: 40px 24px;
+            background: #f0f2f5;
+            text-align: center;
+        }
+        .success-circle {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: #00b96b;
+            color: #fff;
+            font-size: 38px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 20px rgba(0,185,107,0.36);
+        }
+        #successScreen h2 { font-size: 22px; color: #1a1a1a; }
+        #successScreen p { font-size: 14px; color: #777; line-height: 1.7; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.72);
+            color: #fff;
+            padding: 9px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s;
+            white-space: nowrap;
+            max-width: 90vw;
+        }
+        .toast.show { opacity: 1; }
+
+        @media (min-width: 520px) {
+            .page-wrap { padding: 28px 24px 60px; }
+            #sigCanvas { height: 210px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 1 — Loading
+═══════════════════════════════════════════════ -->
+<div id="loadingScreen" class="screen active">
+    <div class="spinner"></div>
+    <p id="loadingText">初始化中…</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 2 — Error
+═══════════════════════════════════════════════ -->
+<div id="errorScreen" class="screen">
+    <div class="error-circle">✕</div>
+    <h2>出现错误</h2>
+    <p id="errorMsg"></p>
+    <button class="btn btn-ghost" style="margin-top:4px" onclick="location.reload()">重新加载</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 3 — Main
+═══════════════════════════════════════════════ -->
+<div id="mainScreen" class="screen">
+    <div class="page-wrap">
+        <div class="page-header">
+            <h1>📋 员工信息确认</h1>
+            <p>请仔细核对以下内容，确认无误后完成手写签名</p>
+        </div>
+
+        <!-- Fields card -->
+        <div class="card">
+            <div class="card-title">
+                <span>📄</span><span>确认内容</span>
+            </div>
+            <div id="fieldsContainer"></div>
+        </div>
+
+        <!-- Signature card -->
+        <div class="card">
+            <div class="card-title">
+                <span>✍️</span><span>员工签名</span>
+            </div>
+            <p class="sig-hint">请在下方白色区域内，使用手指或鼠标完成手写签名</p>
+            <div class="canvas-wrap">
+                <canvas id="sigCanvas"></canvas>
+                <div class="canvas-placeholder" id="sigPlaceholder">请在此处签名</div>
+            </div>
+            <button class="btn btn-ghost" id="clearBtn" style="font-size:13px;padding:8px 14px;">🗑 清除重签</button>
+        </div>
+
+        <!-- Submit card -->
+        <div class="card" style="margin-bottom:0">
+            <button class="btn btn-submit" id="submitBtn">确认签署</button>
+            <div class="processing-row" id="processingRow">
+                <div class="spinner" style="width:15px;height:15px;border-width:2px;flex-shrink:0"></div>
+                <span id="processingMsg">处理中…</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 4 — Success
+═══════════════════════════════════════════════ -->
+<div id="successScreen" class="screen">
+    <div class="success-circle">✓</div>
+    <h2>签署完成！</h2>
+    <p>您已成功完成签署<br>确认图片已保存至记录中</p>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════
+     JavaScript
+═══════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ──────────────────────────────────────────────
+   配置区 — 部署前请填写以下所有值
+────────────────────────────────────────────── */
+const CONFIG = {
+    // Lark 应用凭证（注意：APP_SECRET 存在客户端，仅适用于内部员工工具）
+    APP_ID:       '',    // e.g. "cli_a1b2c3d4e5f6"
+    APP_SECRET:   '',    // e.g. "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+    // GitHub Pages 回调地址（必须与 Lark 应用后台填写的完全一致，末尾不要带 /）
+    REDIRECT_URI: '',    // e.g. "https://yourname.github.io/hr-sign"
+
+    // Lark Base 信息
+    APP_TOKEN:  '',      // Base URL 中的 app_token，e.g. "bascxxxxxxxxxxxxxxxx"
+    TABLE_ID:   '',      // 表格 ID，e.g. "tblxxxxxxxxxxxxxxxx"
+
+    // 展示给员工核对的字段名（与 Base 列名完全一致）
+    FIELDS_TO_SHOW: ['Manager Comments经理评语', 'Total Score'],
+
+    // 功能字段名
+    SIGNATURE_FIELD: '签名图片',   // 附件类型字段，用于存放签名图片
+    STATUS_FIELD:    '签署状态',   // 单选 / 文本字段
+    STATUS_VALUE:    '已签署',    // 签署后写入的状态值
+
+    // 合成图片标题
+    DOC_TITLE: '员工绩效确认书',
+};
+
+/* ──────────────────────────────────────────────
+   应用状态
+────────────────────────────────────────────── */
+const app = {
+    token:       null,   // Lark user access_token
+    recordId:    null,
+    fields:      {},     // 从 Base 读取的原始字段 map
+    sig: {
+        ctx:         null,
+        drawing:     false,
+        hasContent:  false,
+        lastX: 0,
+        lastY: 0,
+    },
+};
+
+/* ──────────────────────────────────────────────
+   UI 工具
+────────────────────────────────────────────── */
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+function setLoadingText(t) { document.getElementById('loadingText').textContent = t; }
+function showError(msg) {
+    document.getElementById('errorMsg').textContent = msg;
+    showScreen('errorScreen');
+}
+function showToast(msg, ms = 3000) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), ms);
+}
+function setProcessing(msg) {
+    const row = document.getElementById('processingRow');
+    const btn  = document.getElementById('submitBtn');
+    if (msg) {
+        document.getElementById('processingMsg').textContent = msg;
+        row.classList.add('on');
+        btn.disabled = true;
+    } else {
+        row.classList.remove('on');
+        btn.disabled = false;
+    }
+}
+
+/* ──────────────────────────────────────────────
+   字段值格式化（处理 Lark Base 各字段类型）
+────────────────────────────────────────────── */
+function fmtVal(v) {
+    if (v === null || v === undefined || v === '') return '—';
+
+    if (Array.isArray(v)) {
+        if (!v.length) return '—';
+        const f = v[0];
+        if (!f || typeof f !== 'object') return v.join(', ');
+        // 富文本段落 [{type, text}, ...]
+        if ('type' in f && 'text' in f) return v.map(s => s.text || '').join('');
+        // 人员字段 [{name, id, ...}]
+        if ('name' in f) return v.map(p => p.name || p.en_name || p.id).join('、');
+        // 选项字段 [{text, color, ...}]
+        if ('text' in f) return v.map(o => o.text).join('、');
+        // 附件字段
+        if ('file_token' in f) return `[${v.length} 个附件]`;
+        return v.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(', ');
+    }
+
+    if (typeof v === 'object') {
+        if ('text' in v && !('link' in v)) return v.text;               // 单选
+        if ('link' in v) return `${v.text || ''} (${v.link})`;          // 链接
+        return JSON.stringify(v);
+    }
+
+    if (typeof v === 'number') {
+        if (v > 1e12) return new Date(v).toLocaleDateString('zh-CN');   // 日期时间戳
+        return String(v);
+    }
+    if (typeof v === 'boolean') return v ? '是' : '否';
+    return String(v);
+}
+
+/* ──────────────────────────────────────────────
+   OAuth — 跳转登录
+────────────────────────────────────────────── */
+function redirectToAuth() {
+    const st = Math.random().toString(36).slice(2);
+    localStorage.setItem('lark_oauth_state', st);
+    const q = new URLSearchParams({
+        app_id:       CONFIG.APP_ID,
+        redirect_uri: CONFIG.REDIRECT_URI,
+        scope:        'bitable:bitable drive:drive',
+        state:        st,
+    });
+    location.href = `https://open.larksuite.com/open-apis/authen/v1/authorize?${q}`;
+}
+
+/* ──────────────────────────────────────────────
+   OAuth — 用 code 换取 user_access_token
+   流程：code → app_access_token → user_access_token
+────────────────────────────────────────────── */
+async function exchangeToken(code) {
+    setLoadingText('正在验证身份…');
+
+    // Step 1: 获取 app_access_token
+    const r1 = await fetch(
+        'https://open.larksuite.com/open-apis/auth/v3/app_access_token/internal',
+        {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ app_id: CONFIG.APP_ID, app_secret: CONFIG.APP_SECRET }),
+        }
+    );
+    const d1 = await r1.json();
+    if (d1.code !== 0) throw new Error(`获取 App Token 失败：${d1.msg || d1.code}`);
+
+    // Step 2: 用 code 换取 user_access_token
+    const r2 = await fetch(
+        'https://open.larksuite.com/open-apis/authen/v1/access_token',
+        {
+            method:  'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'Authorization': `Bearer ${d1.app_access_token}`,
+            },
+            body: JSON.stringify({ grant_type: 'authorization_code', code }),
+        }
+    );
+    const d2 = await r2.json();
+    if (d2.code !== 0) throw new Error(`获取用户 Token 失败：${d2.msg || d2.code}`);
+
+    const { access_token, expires_in } = d2.data;
+    app.token = access_token;
+    localStorage.setItem('lark_token',  access_token);
+    localStorage.setItem('lark_expiry', String(Date.now() + (expires_in - 300) * 1000));
+}
+
+/* ──────────────────────────────────────────────
+   Lark Base — 读取记录
+────────────────────────────────────────────── */
+async function fetchRecord() {
+    setLoadingText('正在读取记录…');
+    const url = [
+        'https://open.larksuite.com/open-apis/bitable/v1/apps',
+        CONFIG.APP_TOKEN, 'tables', CONFIG.TABLE_ID, 'records', app.recordId,
+    ].join('/');
+
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${app.token}` } });
+
+    if (r.status === 401) {
+        // token 过期 → 重新登录
+        localStorage.removeItem('lark_token');
+        localStorage.removeItem('lark_expiry');
+        redirectToAuth();
+        return;
+    }
+    if (!r.ok) throw new Error(`读取记录失败（HTTP ${r.status}）`);
+
+    const d = await r.json();
+    if (d.code !== 0) throw new Error(`读取记录失败：${d.msg || d.code}`);
+    app.fields = d.data.fields || {};
+}
+
+/* ──────────────────────────────────────────────
+   Lark Drive — 上传文件
+────────────────────────────────────────────── */
+async function uploadFile(blob, filename) {
+    const fd = new FormData();
+    fd.append('file_name',   filename);
+    fd.append('parent_type', 'bitable_file');
+    fd.append('parent_node', CONFIG.APP_TOKEN);
+    fd.append('size',        String(blob.size));
+    fd.append('file',        blob, filename);
+
+    const r = await fetch(
+        'https://open.larksuite.com/open-apis/drive/v1/medias/upload_all',
+        { method: 'POST', headers: { Authorization: `Bearer ${app.token}` }, body: fd }
+    );
+    const d = await r.json();
+    if (d.code !== 0) throw new Error(`上传文件失败：${d.msg || d.code}`);
+    return d.data.file_token;
+}
+
+/* ──────────────────────────────────────────────
+   Lark Base — 更新记录
+────────────────────────────────────────────── */
+async function patchRecord(fileToken, filename) {
+    const url = [
+        'https://open.larksuite.com/open-apis/bitable/v1/apps',
+        CONFIG.APP_TOKEN, 'tables', CONFIG.TABLE_ID, 'records', app.recordId,
+    ].join('/');
+
+    const body = {
+        fields: {
+            [CONFIG.SIGNATURE_FIELD]: [{ file_token: fileToken, name: filename }],
+            [CONFIG.STATUS_FIELD]:    CONFIG.STATUS_VALUE,
+        },
+    };
+
+    const r = await fetch(url, {
+        method:  'PUT',
+        headers: { Authorization: `Bearer ${app.token}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (d.code !== 0) throw new Error(`更新记录失败：${d.msg || d.code}`);
+}
+
+/* ──────────────────────────────────────────────
+   渲染字段
+────────────────────────────────────────────── */
+function renderFields() {
+    const container = document.getElementById('fieldsContainer');
+    const keys = CONFIG.FIELDS_TO_SHOW.length ? CONFIG.FIELDS_TO_SHOW : Object.keys(app.fields);
+    container.innerHTML = keys.map(k => `
+        <div class="field-row">
+            <div class="field-label">${esc(k)}</div>
+            <div class="field-value">${esc(fmtVal(app.fields[k]))}</div>
+        </div>`
+    ).join('');
+}
+function esc(s) {
+    return String(s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ──────────────────────────────────────────────
+   Canvas 签名板
+────────────────────────────────────────────── */
+function initCanvas() {
+    const canvas = document.getElementById('sigCanvas');
+    const dpr    = window.devicePixelRatio || 1;
+    const rect   = canvas.getBoundingClientRect();
+    canvas.width  = Math.round(rect.width  * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth   = 2.5;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    app.sig.ctx = ctx;
+
+    function getXY(e) {
+        const r  = canvas.getBoundingClientRect();
+        const src = e.changedTouches ? e.changedTouches[0] : e;
+        return { x: src.clientX - r.left, y: src.clientY - r.top };
+    }
+    function startDraw(e) {
+        const { x, y } = getXY(e);
+        app.sig.drawing = true;
+        app.sig.lastX = x;
+        app.sig.lastY = y;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.0, 0, Math.PI * 2);
+        ctx.fill();
+        markSigned(true);
+    }
+    function moveDraw(e) {
+        if (!app.sig.drawing) return;
+        const { x, y } = getXY(e);
+        ctx.beginPath();
+        ctx.moveTo(app.sig.lastX, app.sig.lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        app.sig.lastX = x;
+        app.sig.lastY = y;
+    }
+    function stopDraw() { app.sig.drawing = false; }
+
+    canvas.addEventListener('mousedown',  startDraw);
+    canvas.addEventListener('mousemove',  moveDraw);
+    canvas.addEventListener('mouseup',    stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e); }, { passive: false });
+    canvas.addEventListener('touchmove',  e => { e.preventDefault(); moveDraw(e);  }, { passive: false });
+    canvas.addEventListener('touchend',   e => { e.preventDefault(); stopDraw();   }, { passive: false });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        markSigned(false);
+    });
+}
+
+function markSigned(has) {
+    app.sig.hasContent = has;
+    document.getElementById('sigPlaceholder').style.display = has ? 'none' : 'flex';
+}
+
+/* ──────────────────────────────────────────────
+   合成确认图片
+────────────────────────────────────────────── */
+function composeImage() {
+    const W    = 800;
+    const PAD  = 48;
+    const CW   = W - PAD * 2;  // 可用内容宽度
+    const SZ   = { title: 24, section: 14, label: 12, value: 15, small: 12 };
+    const LH   = 24;
+    const FONT = `"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif`;
+
+    // ── 辅助：字符级换行，适合 CJK ──
+    function wrapLines(ctx, text, maxW) {
+        const str = String(text || '—');
+        const lines = [];
+        for (const para of str.split(/\r?\n/)) {
+            let line = '';
+            for (const ch of para) {
+                if (ctx.measureText(line + ch).width > maxW && line) {
+                    lines.push(line); line = ch;
+                } else { line += ch; }
+            }
+            lines.push(line || '');
+        }
+        return lines.length ? lines : ['—'];
+    }
+
+    // ── 第一遍：计算总高度 ──
+    const probe = document.createElement('canvas').getContext('2d');
+    const keys  = CONFIG.FIELDS_TO_SHOW.length ? CONFIG.FIELDS_TO_SHOW : Object.keys(app.fields);
+
+    let H = PAD + 10
+          + 36          // 顶色条
+          + 50          // 标题
+          + 22          // 日期
+          + 30          // 分割线
+          + 26          // 「确认内容」section 标题
+          + 10;
+
+    probe.font = `${SZ.label}px ${FONT}`;
+    for (const k of keys) {
+        H += SZ.label + 8;
+        probe.font = `${SZ.value}px ${FONT}`;
+        const n = wrapLines(probe, fmtVal(app.fields[k]), CW).length;
+        H += n * LH + 16;
+    }
+    H += 28;  // 分割线
+
+    const sigCanvas = document.getElementById('sigCanvas');
+    const sigRect   = sigCanvas.getBoundingClientRect();
+    const sigW      = Math.min(CW, 420);
+    const sigH      = Math.round(sigW * (sigRect.height / Math.max(sigRect.width, 1)));
+    H += 26 + 10 + sigH + 20 + 26 + PAD + 10;  // 签名 section
+
+    // ── 第二遍：绘制 ──
+    const canvas = document.createElement('canvas');
+    const SCALE  = 2;
+    canvas.width  = W * SCALE;
+    canvas.height = H * SCALE;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(SCALE, SCALE);
+
+    // 背景
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    // 顶部绿色条
+    ctx.fillStyle = '#00b96b';
+    ctx.fillRect(0, 0, W, 6);
+
+    let y = 6 + PAD;
+
+    // 标题
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = `bold ${SZ.title + 4}px ${FONT}`;
+    ctx.fillText(CONFIG.DOC_TITLE, W / 2, y + 28);
+    y += 52;
+
+    // 日期
+    ctx.font = `${SZ.small}px ${FONT}`;
+    ctx.fillStyle = '#999';
+    ctx.fillText(
+        new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
+        W / 2, y
+    );
+    y += 26;
+
+    // 分割线
+    ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+    y += 22;
+
+    // 「确认内容」section 标题
+    ctx.textAlign = 'left';
+    ctx.font = `bold ${SZ.section}px ${FONT}`;
+    ctx.fillStyle = '#00b96b';
+    ctx.fillText('📄 确认内容', PAD, y);
+    y += 22;
+
+    // 各字段
+    for (const k of keys) {
+        // 字段名
+        ctx.font = `${SZ.label}px ${FONT}`;
+        ctx.fillStyle = '#999';
+        ctx.fillText(k, PAD, y);
+        y += SZ.label + 8;
+
+        // 字段值（换行）
+        ctx.font = `${SZ.value}px ${FONT}`;
+        ctx.fillStyle = '#1a1a1a';
+        const lines = wrapLines(ctx, fmtVal(app.fields[k]), CW);
+        for (const line of lines) { ctx.fillText(line, PAD, y); y += LH; }
+        y += 10;
+    }
+
+    y += 10;
+
+    // 分割线
+    ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+    y += 22;
+
+    // 「员工签名」section 标题
+    ctx.font = `bold ${SZ.section}px ${FONT}`;
+    ctx.fillStyle = '#00b96b';
+    ctx.fillText('✍️ 员工签名', PAD, y);
+    y += 14;
+
+    // 绘制签名图
+    ctx.drawImage(sigCanvas, PAD, y, sigW, sigH);
+    // 签名边框
+    ctx.strokeStyle = '#d0d8e8'; ctx.lineWidth = 1;
+    ctx.strokeRect(PAD, y, sigW, sigH);
+    y += sigH + 18;
+
+    // 签署时间
+    ctx.font = `${SZ.small + 1}px ${FONT}`;
+    ctx.fillStyle = '#aaa';
+    ctx.fillText(`签署时间：${new Date().toLocaleString('zh-CN')}`, PAD, y);
+    y += 24;
+
+    // 底部绿线
+    ctx.strokeStyle = '#00b96b'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+
+    return canvas;
+}
+
+/* ──────────────────────────────────────────────
+   提交签署
+────────────────────────────────────────────── */
+async function handleSubmit() {
+    if (!app.sig.hasContent) {
+        showToast('请先在签名框内完成手写签名');
+        document.getElementById('sigCanvas').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    try {
+        setProcessing('正在生成确认图片…');
+        const composed = composeImage();
+        const blob = await new Promise(res => composed.toBlob(res, 'image/png', 1.0));
+
+        const ts       = Date.now();
+        const filename = `签署确认_${app.recordId}_${ts}.png`;
+
+        setProcessing('正在上传图片…');
+        const fileToken = await uploadFile(blob, filename);
+
+        setProcessing('正在保存记录…');
+        await patchRecord(fileToken, filename);
+
+        setProcessing(null);
+        localStorage.removeItem('lark_record_id');
+        showScreen('successScreen');
+
+    } catch (err) {
+        setProcessing(null);
+        console.error('[签署失败]', err);
+        showToast(`签署失败：${err.message}`, 5000);
+    }
+}
+
+/* ──────────────────────────────────────────────
+   主初始化流程
+────────────────────────────────────────────── */
+async function main() {
+    // ── 配置检查 ──
+    if (!CONFIG.APP_ID || !CONFIG.APP_SECRET || !CONFIG.REDIRECT_URI ||
+        !CONFIG.APP_TOKEN || !CONFIG.TABLE_ID) {
+        showError('页面尚未配置完成，请联系管理员在 HTML 文件顶部填写 CONFIG 中的所有必填项。');
+        return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const code   = params.get('code');
+    const rid    = params.get('record_id');
+
+    // 保存 record_id（OAuth 回跳后 URL 中不再携带）
+    if (rid) localStorage.setItem('lark_record_id', rid);
+
+    app.recordId = localStorage.getItem('lark_record_id');
+    if (!app.recordId) {
+        showError('链接无效：缺少 record_id 参数，请通过正确的链接访问此页面。');
+        return;
+    }
+
+    // ── 处理 OAuth 回调 ──
+    if (code) {
+        try {
+            await exchangeToken(code);
+        } catch (err) {
+            showError(`身份验证失败：${err.message}`);
+            return;
+        }
+        // 清理 URL 中的 OAuth 参数
+        history.replaceState({}, document.title, CONFIG.REDIRECT_URI);
+    } else {
+        // 检查本地缓存的 token
+        const saved  = localStorage.getItem('lark_token');
+        const expiry = localStorage.getItem('lark_expiry');
+        if (saved && expiry && Date.now() < Number(expiry)) {
+            app.token = saved;
+        } else {
+            localStorage.removeItem('lark_token');
+            localStorage.removeItem('lark_expiry');
+            redirectToAuth();
+            return;
+        }
+    }
+
+    // ── 读取记录 ──
+    try {
+        await fetchRecord();
+    } catch (err) {
+        showError(`读取记录失败：${err.message}`);
+        return;
+    }
+
+    // ── 渲染主页面 ──
+    renderFields();
+    showScreen('mainScreen');
+
+    // Canvas 需在 DOM 渲染完成后初始化
+    requestAnimationFrame(() => {
+        requestAnimationFrame(initCanvas);
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+}
+
+main().catch(err => {
+    console.error('[初始化错误]', err);
+    showError(`初始化失败：${err.message}`);
+});
+</script>
+</body>
+</html>
