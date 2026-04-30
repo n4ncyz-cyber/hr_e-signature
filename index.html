@@ -316,7 +316,7 @@
 ────────────────────────────────────────────── */
 const CONFIG = {
   APP_ID:       'cli_a97842ce87f8deef',
-  APP_SECRET:   '',
+  APP_SECRET:   '8za2d4G1z1V5K9uVx8KUQd5xQNIvQJVW',
   REDIRECT_URI: 'https://n4ncyz-cyber.github.io/hr_e-signature/',
   APP_TOKEN:    'Azh3b2KNraEmfLsL0dila3whgrg',
   TABLE_ID:     'tblCxnbQFjtnSBSp',
@@ -433,7 +433,7 @@ function redirectToAuth() {
     const q = new URLSearchParams({
         app_id:       CONFIG.APP_ID,
         redirect_uri: CONFIG.REDIRECT_URI,
-        scope: 'bitable:app bitable:app:readonly drive:file',
+        scope:        'bitable:bitable drive:drive',
         state:        st,
     });
     location.href = `https://open.larksuite.com/open-apis/authen/v1/authorize?${q}`;
@@ -445,19 +445,18 @@ function redirectToAuth() {
 ────────────────────────────────────────────── */
 async function exchangeToken(code) {
     setLoadingText('Verifying identity...');
-    
-    const r = await fetch('https://lark-auth.n4ncyz.workers.dev/', {
-        method: 'POST',
+
+    const r = await fetch('https://lark-auth.n4ncyz.workers.dev/auth', {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body:    JSON.stringify({ code }),
     });
-    
     const d = await r.json();
-    if (d.code !== 0) throw new Error(`Authentication failed: ${d.msg || d.code}`);
-    
+    if (d.code !== 0) throw new Error(`Failed to get User Token: ${d.msg || d.code}`);
+
     const { access_token, expires_in } = d.data;
     app.token = access_token;
-    localStorage.setItem('lark_token', access_token);
+    localStorage.setItem('lark_token',  access_token);
     localStorage.setItem('lark_expiry', String(Date.now() + (expires_in - 300) * 1000));
 }
 
@@ -471,10 +470,14 @@ async function fetchRecord() {
         CONFIG.APP_TOKEN, 'tables', CONFIG.TABLE_ID, 'records', app.recordId,
     ].join('/');
 
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${app.token}` } });
+    const r = await fetch('https://lark-auth.n4ncyz.workers.dev/proxy', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ lark_url: url, method: 'GET', token: app.token }),
+    });
 
     if (r.status === 401) {
-        // token 过期 → 重新登录
+        // token expired → re-login
         localStorage.removeItem('lark_token');
         localStorage.removeItem('lark_expiry');
         redirectToAuth();
@@ -523,10 +526,10 @@ async function patchRecord(fileToken, filename) {
         },
     };
 
-    const r = await fetch(url, {
-        method:  'PUT',
-        headers: { Authorization: `Bearer ${app.token}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body),
+    const r = await fetch('https://lark-auth.n4ncyz.workers.dev/proxy', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ lark_url: url, method: 'PUT', body, token: app.token }),
     });
     const d = await r.json();
     if (d.code !== 0) throw new Error(`Failed to update record: ${d.msg || d.code}`);
@@ -804,8 +807,8 @@ async function handleSubmit() {
 ────────────────────────────────────────────── */
 async function main() {
     // ── 配置检查 ──
-    if (!CONFIG.APP_ID || !CONFIG.REDIRECT_URI ||
-    !CONFIG.APP_TOKEN || !CONFIG.TABLE_ID) {
+    if (!CONFIG.APP_ID || !CONFIG.APP_SECRET || !CONFIG.REDIRECT_URI ||
+        !CONFIG.APP_TOKEN || !CONFIG.TABLE_ID) {
         showError('Page not configured. Please ask your administrator to fill in all required fields in the CONFIG section of the HTML file.');
         return;
     }
