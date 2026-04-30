@@ -3,228 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Employee Signature Confirmation</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
                          "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-            background: #f0f2f5;
-            color: #1a1a1a;
-            min-height: 100vh;
+            background: #f0f2f5; color: #1a1a1a; min-height: 100vh;
         }
-
-        /* ── Screens ── */
         .screen { display: none; min-height: 100vh; }
         .screen.active { display: flex; flex-direction: column; }
-
-        /* ── Loading ── */
-        #loadingScreen {
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            background: #f0f2f5;
-        }
+        #loadingScreen { align-items: center; justify-content: center; gap: 16px; background: #f0f2f5; }
         .spinner {
             width: 40px; height: 40px;
-            border: 3px solid #d9d9d9;
-            border-top-color: #00b96b;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
+            border: 3px solid #d9d9d9; border-top-color: #00b96b;
+            border-radius: 50%; animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         #loadingText { color: #666; font-size: 15px; }
-
-        /* ── Error ── */
         #errorScreen {
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            padding: 32px 24px;
-            text-align: center;
-            background: #f0f2f5;
+            align-items: center; justify-content: center; gap: 14px;
+            padding: 32px 24px; text-align: center; background: #f0f2f5;
         }
         .error-circle {
-            width: 64px; height: 64px;
-            border-radius: 50%;
-            background: #ff4d4f;
-            color: #fff;
-            font-size: 30px;
+            width: 64px; height: 64px; border-radius: 50%;
+            background: #ff4d4f; color: #fff; font-size: 30px;
             display: flex; align-items: center; justify-content: center;
         }
         #errorScreen h2 { font-size: 20px; color: #1a1a1a; }
         #errorMsg { color: #666; font-size: 14px; max-width: 320px; line-height: 1.7; }
-
-        /* ── Main ── */
         #mainScreen { background: #f0f2f5; align-items: center; }
-
-        .page-wrap {
-            width: 100%;
-            max-width: 680px;
-            padding: 20px 14px 48px;
-        }
-
+        .page-wrap { width: 100%; max-width: 680px; padding: 20px 14px 48px; }
         .page-header {
-            text-align: center;
-            padding: 28px 0 22px;
-            border-bottom: 2px solid #e6e9ed;
-            margin-bottom: 20px;
+            text-align: center; padding: 28px 0 22px;
+            border-bottom: 2px solid #e6e9ed; margin-bottom: 20px;
         }
         .page-header h1 { font-size: 22px; font-weight: 700; color: #1a1a1a; }
         .page-header p { margin-top: 7px; font-size: 13px; color: #888; }
-
-        /* ── Cards ── */
         .card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 18px 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+            background: #fff; border-radius: 12px; padding: 18px 16px;
+            margin-bottom: 16px; box-shadow: 0 1px 6px rgba(0,0,0,0.07);
         }
         .card-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #00b96b;
-            margin-bottom: 14px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 14px; font-weight: 600; color: #00b96b;
+            margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;
+            display: flex; align-items: center; gap: 6px;
         }
-
-        /* ── Fields ── */
-        .field-row {
-            padding: 11px 0;
-            border-bottom: 1px solid #f5f5f5;
-        }
+        .field-row { padding: 11px 0; border-bottom: 1px solid #f5f5f5; }
         .field-row:last-child { border-bottom: none; }
         .field-label { font-size: 12px; color: #999; margin-bottom: 5px; font-weight: 500; }
         .field-value { font-size: 15px; color: #222; line-height: 1.65; word-break: break-word; white-space: pre-wrap; }
-
-        /* ── Signature canvas ── */
         .sig-hint { font-size: 12px; color: #aaa; margin-bottom: 10px; }
-
         .canvas-wrap {
-            border: 2px dashed #c8d4e3;
-            border-radius: 8px;
-            background: #fff;
-            position: relative;
-            margin-bottom: 10px;
-            overflow: hidden;
+            border: 2px dashed #c8d4e3; border-radius: 8px; background: #fff;
+            position: relative; margin-bottom: 10px; overflow: hidden;
         }
         #sigCanvas {
-            display: block;
-            width: 100%;
-            height: 180px;
-            cursor: crosshair;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
+            display: block; width: 100%; height: 180px;
+            cursor: crosshair; touch-action: none;
+            -webkit-user-select: none; user-select: none;
         }
         .canvas-placeholder {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ccc;
-            font-size: 14px;
-            pointer-events: none;
+            position: absolute; inset: 0; display: flex;
+            align-items: center; justify-content: center;
+            color: #ccc; font-size: 14px; pointer-events: none;
         }
-
-        /* ── Buttons ── */
         .btn {
-            border: none;
-            border-radius: 8px;
-            padding: 10px 18px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            font-family: inherit;
-            transition: background 0.15s, box-shadow 0.15s;
+            border: none; border-radius: 8px; padding: 10px 18px;
+            font-size: 14px; font-weight: 500; cursor: pointer;
+            font-family: inherit; transition: background 0.15s;
         }
-        .btn-ghost {
-            background: #f5f5f5;
-            color: #666;
-            border: 1px solid #e0e0e0;
-        }
+        .btn-ghost { background: #f5f5f5; color: #666; border: 1px solid #e0e0e0; }
         .btn-ghost:hover { background: #ebebeb; }
-
         .btn-submit {
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: 600;
-            background: #00b96b;
-            color: #fff;
-            border-radius: 10px;
+            width: 100%; padding: 15px; font-size: 16px; font-weight: 600;
+            background: #00b96b; color: #fff; border-radius: 10px;
             box-shadow: 0 4px 14px rgba(0,185,107,0.28);
         }
-        .btn-submit:hover:not(:disabled) {
-            background: #00a860;
-            box-shadow: 0 6px 18px rgba(0,185,107,0.38);
-        }
-        .btn-submit:disabled {
-            background: #b0b0b0;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        /* ── Processing row ── */
+        .btn-submit:hover:not(:disabled) { background: #00a860; }
+        .btn-submit:disabled { background: #b0b0b0; box-shadow: none; cursor: not-allowed; }
         .processing-row {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 12px;
-            font-size: 13px;
-            color: #888;
+            display: none; align-items: center; justify-content: center;
+            gap: 8px; margin-top: 12px; font-size: 13px; color: #888;
         }
         .processing-row.on { display: flex; }
-
-        /* ── Success ── */
         #successScreen {
-            align-items: center;
-            justify-content: center;
-            gap: 18px;
-            padding: 40px 24px;
-            background: #f0f2f5;
-            text-align: center;
+            align-items: center; justify-content: center; gap: 18px;
+            padding: 40px 24px; background: #f0f2f5; text-align: center;
         }
         .success-circle {
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            background: #00b96b;
-            color: #fff;
-            font-size: 38px;
+            width: 80px; height: 80px; border-radius: 50%;
+            background: #00b96b; color: #fff; font-size: 38px;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 6px 20px rgba(0,185,107,0.36);
         }
         #successScreen h2 { font-size: 22px; color: #1a1a1a; }
         #successScreen p { font-size: 14px; color: #777; line-height: 1.7; }
-
-        /* ── Toast ── */
         .toast {
-            position: fixed;
-            top: 22px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.72);
-            color: #fff;
-            padding: 9px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            z-index: 9999;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.25s;
-            white-space: nowrap;
-            max-width: 90vw;
+            position: fixed; top: 22px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.72); color: #fff; padding: 9px 20px;
+            border-radius: 20px; font-size: 14px; z-index: 9999;
+            pointer-events: none; opacity: 0; transition: opacity 0.25s;
+            white-space: nowrap; max-width: 90vw;
         }
         .toast.show { opacity: 1; }
-
         @media (min-width: 520px) {
             .page-wrap { padding: 28px 24px 60px; }
             #sigCanvas { height: 210px; }
@@ -233,17 +116,11 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 1 — Loading
-═══════════════════════════════════════════════ -->
 <div id="loadingScreen" class="screen active">
     <div class="spinner"></div>
     <p id="loadingText">Initializing...</p>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 2 — Error
-═══════════════════════════════════════════════ -->
 <div id="errorScreen" class="screen">
     <div class="error-circle">✕</div>
     <h2>An Error Occurred</h2>
@@ -251,29 +128,18 @@
     <button class="btn btn-ghost" style="margin-top:4px" onclick="location.reload()">Reload</button>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 3 — Main
-═══════════════════════════════════════════════ -->
 <div id="mainScreen" class="screen">
     <div class="page-wrap">
         <div class="page-header">
             <h1>📋 Employee Confirmation</h1>
             <p>Please review the information below and complete your handwritten signature</p>
         </div>
-
-        <!-- Fields card -->
         <div class="card">
-            <div class="card-title">
-                <span>📄</span><span>Confirmation Details</span>
-            </div>
+            <div class="card-title"><span>📄</span><span>Confirmation Details</span></div>
             <div id="fieldsContainer"></div>
         </div>
-
-        <!-- Signature card -->
         <div class="card">
-            <div class="card-title">
-                <span>✍️</span><span>Employee Signature</span>
-            </div>
+            <div class="card-title"><span>✍️</span><span>Employee Signature</span></div>
             <p class="sig-hint">Please sign in the area below using your finger or mouse</p>
             <div class="canvas-wrap">
                 <canvas id="sigCanvas"></canvas>
@@ -281,8 +147,6 @@
             </div>
             <button class="btn btn-ghost" id="clearBtn" style="font-size:13px;padding:8px 14px;">🗑 Clear & Re-sign</button>
         </div>
-
-        <!-- Submit card -->
         <div class="card" style="margin-bottom:0">
             <button class="btn btn-submit" id="submitBtn">Confirm & Sign</button>
             <div class="processing-row" id="processingRow">
@@ -293,31 +157,22 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 4 — Success
-═══════════════════════════════════════════════ -->
 <div id="successScreen" class="screen">
     <div class="success-circle">✓</div>
     <h2>Signing Complete!</h2>
     <p>Your signature has been recorded.<br>The confirmation image has been saved.</p>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- ═══════════════════════════════════════════════
-     JavaScript
-═══════════════════════════════════════════════ -->
 <script>
 'use strict';
 
-/* ──────────────────────────────────────────────
-   配置区 — 部署前请填写以下所有值
-────────────────────────────────────────────── */
 const CONFIG = {
   APP_ID:       'cli_a97842ce87f8deef',
-  APP_SECRET:   '8za2d4G1z1V5K9uVx8KUQd5xQNIvQJVW',
+  APP_SECRET:   '',
   REDIRECT_URI: 'https://n4ncyz-cyber.github.io/hr_e-signature/',
+  WORKER_URL:   'https://lark-auth.n4ncyz.workers.dev',
   APP_TOKEN:    'Azh3b2KNraEmfLsL0dila3whgrg',
   TABLE_ID:     'tblCxnbQFjtnSBSp',
   FIELDS_TO_SHOW: [
@@ -342,202 +197,129 @@ const CONFIG = {
   DOC_TITLE:       'Employee Performance Review',
 };
 
-/* ──────────────────────────────────────────────
-   应用状态
-────────────────────────────────────────────── */
 const app = {
-    token:       null,   // Lark user access_token
-    recordId:    null,
-    fields:      {},     // 从 Base 读取的原始字段 map
-    sig: {
-        ctx:         null,
-        drawing:     false,
-        hasContent:  false,
-        lastX: 0,
-        lastY: 0,
-    },
+    token: null, recordId: null, fields: {},
+    sig: { ctx: null, drawing: false, hasContent: false, lastX: 0, lastY: 0 },
 };
 
-/* ──────────────────────────────────────────────
-   UI 工具
-────────────────────────────────────────────── */
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
 function setLoadingText(t) { document.getElementById('loadingText').textContent = t; }
-function showError(msg) {
-    document.getElementById('errorMsg').textContent = msg;
-    showScreen('errorScreen');
-}
+function showError(msg) { document.getElementById('errorMsg').textContent = msg; showScreen('errorScreen'); }
 function showToast(msg, ms = 3000) {
     const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.classList.add('show');
+    el.textContent = msg; el.classList.add('show');
     setTimeout(() => el.classList.remove('show'), ms);
 }
 function setProcessing(msg) {
     const row = document.getElementById('processingRow');
-    const btn  = document.getElementById('submitBtn');
-    if (msg) {
-        document.getElementById('processingMsg').textContent = msg;
-        row.classList.add('on');
-        btn.disabled = true;
-    } else {
-        row.classList.remove('on');
-        btn.disabled = false;
-    }
+    const btn = document.getElementById('submitBtn');
+    if (msg) { document.getElementById('processingMsg').textContent = msg; row.classList.add('on'); btn.disabled = true; }
+    else { row.classList.remove('on'); btn.disabled = false; }
 }
 
-/* ──────────────────────────────────────────────
-   字段值格式化（处理 Lark Base 各字段类型）
-────────────────────────────────────────────── */
 function fmtVal(v) {
     if (v === null || v === undefined || v === '') return '—';
-
     if (Array.isArray(v)) {
         if (!v.length) return '—';
         const f = v[0];
         if (!f || typeof f !== 'object') return v.join(', ');
-        // 富文本段落 [{type, text}, ...]
         if ('type' in f && 'text' in f) return v.map(s => s.text || '').join('');
-        // 人员字段 [{name, id, ...}]
         if ('name' in f) return v.map(p => p.name || p.en_name || p.id).join(', ');
-        // Select fields [{text, color, ...}]
         if ('text' in f) return v.map(o => o.text).join(', ');
-        // 附件字段
         if ('file_token' in f) return `[${v.length} attachment(s)]`;
         return v.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(', ');
     }
-
     if (typeof v === 'object') {
-        if ('text' in v && !('link' in v)) return v.text;               // 单选
-        if ('link' in v) return `${v.text || ''} (${v.link})`;          // 链接
+        if ('text' in v && !('link' in v)) return v.text;
+        if ('link' in v) return `${v.text || ''} (${v.link})`;
         return JSON.stringify(v);
     }
-
-    if (typeof v === 'number') {
-        if (v > 1e12) return new Date(v).toLocaleDateString('en-US');   // date timestamp
-        return String(v);
-    }
+    if (typeof v === 'number') { if (v > 1e12) return new Date(v).toLocaleDateString('en-US'); return String(v); }
     if (typeof v === 'boolean') return v ? 'Yes' : 'No';
     return String(v);
 }
 
-/* ──────────────────────────────────────────────
-   OAuth — 跳转登录
-────────────────────────────────────────────── */
 function redirectToAuth() {
     const st = Math.random().toString(36).slice(2);
     localStorage.setItem('lark_oauth_state', st);
     const q = new URLSearchParams({
-        app_id:       CONFIG.APP_ID,
+        app_id: CONFIG.APP_ID,
         redirect_uri: CONFIG.REDIRECT_URI,
         scope: 'bitable:app bitable:app:readonly drive:file',
-        state:        st,
+        state: st,
     });
     location.href = `https://open.larksuite.com/open-apis/authen/v1/authorize?${q}`;
 }
 
-/* ──────────────────────────────────────────────
-   OAuth — 用 code 换取 user_access_token
-   流程：code → app_access_token → user_access_token
-────────────────────────────────────────────── */
 async function exchangeToken(code) {
     setLoadingText('Verifying identity...');
-
-    const r = await fetch('https://lark-auth.n4ncyz.workers.dev/auth', {
-        method:  'POST',
+    const r = await fetch(`${CONFIG.WORKER_URL}/auth`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ code }),
+        body: JSON.stringify({ code }),
     });
     const d = await r.json();
-    if (d.code !== 0) throw new Error(`Failed to get User Token: ${d.msg || d.code}`);
-
+    if (d.code !== 0) throw new Error(`Authentication failed: ${d.msg || d.code}`);
     const { access_token, expires_in } = d.data;
     app.token = access_token;
-    localStorage.setItem('lark_token',  access_token);
+    localStorage.setItem('lark_token', access_token);
     localStorage.setItem('lark_expiry', String(Date.now() + (expires_in - 300) * 1000));
 }
 
-/* ──────────────────────────────────────────────
-   Lark Base — 读取记录
-────────────────────────────────────────────── */
 async function fetchRecord() {
     setLoadingText('Loading record...');
-    const url = [
+    const lark_url = [
         'https://open.larksuite.com/open-apis/bitable/v1/apps',
         CONFIG.APP_TOKEN, 'tables', CONFIG.TABLE_ID, 'records', app.recordId,
     ].join('/');
-
-    const r = await fetch('https://lark-auth.n4ncyz.workers.dev/proxy', {
-        method:  'POST',
+    const r = await fetch(`${CONFIG.WORKER_URL}/proxy`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ lark_url: url, method: 'GET', token: app.token }),
+        body: JSON.stringify({ lark_url, method: 'GET', token: app.token }),
     });
-
-    if (r.status === 401) {
-        // token expired → re-login
-        localStorage.removeItem('lark_token');
-        localStorage.removeItem('lark_expiry');
-        redirectToAuth();
-        return;
-    }
-    if (!r.ok) throw new Error(`Failed to load record (HTTP ${r.status})`);
-
     const d = await r.json();
     if (d.code !== 0) throw new Error(`Failed to load record: ${d.msg || d.code}`);
     app.fields = d.data.fields || {};
 }
 
-/* ──────────────────────────────────────────────
-   Lark Drive — 上传文件
-────────────────────────────────────────────── */
 async function uploadFile(blob, filename) {
     const fd = new FormData();
-    fd.append('file_name',   filename);
+    fd.append('file_name', filename);
     fd.append('parent_type', 'bitable_file');
     fd.append('parent_node', CONFIG.APP_TOKEN);
-    fd.append('size',        String(blob.size));
-    fd.append('file',        blob, filename);
-
-    const r = await fetch(
-        'https://open.larksuite.com/open-apis/drive/v1/medias/upload_all',
-        { method: 'POST', headers: { Authorization: `Bearer ${app.token}` }, body: fd }
-    );
+    fd.append('size', String(blob.size));
+    fd.append('file', blob, filename);
+    const r = await fetch('https://open.larksuite.com/open-apis/drive/v1/medias/upload_all', {
+        method: 'POST', headers: { Authorization: `Bearer ${app.token}` }, body: fd,
+    });
     const d = await r.json();
     if (d.code !== 0) throw new Error(`Failed to upload file: ${d.msg || d.code}`);
     return d.data.file_token;
 }
 
-/* ──────────────────────────────────────────────
-   Lark Base — 更新记录
-────────────────────────────────────────────── */
 async function patchRecord(fileToken, filename) {
-    const url = [
+    const lark_url = [
         'https://open.larksuite.com/open-apis/bitable/v1/apps',
         CONFIG.APP_TOKEN, 'tables', CONFIG.TABLE_ID, 'records', app.recordId,
     ].join('/');
-
     const body = {
         fields: {
             [CONFIG.SIGNATURE_FIELD]: [{ file_token: fileToken, name: filename }],
-            [CONFIG.STATUS_FIELD]:    CONFIG.STATUS_VALUE,
+            [CONFIG.STATUS_FIELD]: CONFIG.STATUS_VALUE,
         },
     };
-
-    const r = await fetch('https://lark-auth.n4ncyz.workers.dev/proxy', {
-        method:  'POST',
+    const r = await fetch(`${CONFIG.WORKER_URL}/proxy`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ lark_url: url, method: 'PUT', body, token: app.token }),
+        body: JSON.stringify({ lark_url, method: 'PUT', body, token: app.token }),
     });
     const d = await r.json();
     if (d.code !== 0) throw new Error(`Failed to update record: ${d.msg || d.code}`);
 }
 
-/* ──────────────────────────────────────────────
-   渲染字段
-────────────────────────────────────────────── */
 function renderFields() {
     const container = document.getElementById('fieldsContainer');
     const keys = CONFIG.FIELDS_TO_SHOW.length ? CONFIG.FIELDS_TO_SHOW : Object.keys(app.fields);
@@ -545,57 +327,39 @@ function renderFields() {
         <div class="field-row">
             <div class="field-label">${esc(k)}</div>
             <div class="field-value">${esc(fmtVal(app.fields[k]))}</div>
-        </div>`
-    ).join('');
+        </div>`).join('');
 }
 function esc(s) {
-    return String(s)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ──────────────────────────────────────────────
-   Canvas 签名板
-────────────────────────────────────────────── */
 function initCanvas() {
     const canvas = document.getElementById('sigCanvas');
-    const dpr    = window.devicePixelRatio || 1;
-    const rect   = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
     canvas.width  = Math.round(rect.width  * dpr);
     canvas.height = Math.round(rect.height * dpr);
-
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth   = 2.5;
-    ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     app.sig.ctx = ctx;
 
     function getXY(e) {
-        const r  = canvas.getBoundingClientRect();
+        const r = canvas.getBoundingClientRect();
         const src = e.changedTouches ? e.changedTouches[0] : e;
         return { x: src.clientX - r.left, y: src.clientY - r.top };
     }
     function startDraw(e) {
         const { x, y } = getXY(e);
-        app.sig.drawing = true;
-        app.sig.lastX = x;
-        app.sig.lastY = y;
-        ctx.beginPath();
-        ctx.arc(x, y, 1.0, 0, Math.PI * 2);
-        ctx.fill();
+        app.sig.drawing = true; app.sig.lastX = x; app.sig.lastY = y;
+        ctx.beginPath(); ctx.arc(x, y, 1.0, 0, Math.PI * 2); ctx.fill();
         markSigned(true);
     }
     function moveDraw(e) {
         if (!app.sig.drawing) return;
         const { x, y } = getXY(e);
-        ctx.beginPath();
-        ctx.moveTo(app.sig.lastX, app.sig.lastY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        app.sig.lastX = x;
-        app.sig.lastY = y;
+        ctx.beginPath(); ctx.moveTo(app.sig.lastX, app.sig.lastY); ctx.lineTo(x, y); ctx.stroke();
+        app.sig.lastX = x; app.sig.lastY = y;
     }
     function stopDraw() { app.sig.drawing = false; }
 
@@ -608,8 +372,7 @@ function initCanvas() {
     canvas.addEventListener('touchend',   e => { e.preventDefault(); stopDraw();   }, { passive: false });
 
     document.getElementById('clearBtn').addEventListener('click', () => {
-        ctx.clearRect(0, 0, rect.width, rect.height);
-        markSigned(false);
+        ctx.clearRect(0, 0, rect.width, rect.height); markSigned(false);
     });
 }
 
@@ -618,172 +381,102 @@ function markSigned(has) {
     document.getElementById('sigPlaceholder').style.display = has ? 'none' : 'flex';
 }
 
-/* ──────────────────────────────────────────────
-   合成确认图片
-────────────────────────────────────────────── */
 function composeImage() {
-    const W    = 800;
-    const PAD  = 48;
-    const CW   = W - PAD * 2;  // 可用内容宽度
-    const SZ   = { title: 24, section: 14, label: 12, value: 15, small: 12 };
-    const LH   = 24;
-    const FONT = `"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif`;
+    const W = 800, PAD = 48, CW = W - PAD * 2;
+    const SZ = { title: 24, section: 14, label: 12, value: 15, small: 12 };
+    const LH = 24;
+    const FONT = '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif';
 
-    // ── 辅助：字符级换行，适合 CJK ──
     function wrapLines(ctx, text, maxW) {
-        const str = String(text || '—');
-        const lines = [];
+        const str = String(text || '—'); const lines = [];
         for (const para of str.split(/\r?\n/)) {
             let line = '';
             for (const ch of para) {
-                if (ctx.measureText(line + ch).width > maxW && line) {
-                    lines.push(line); line = ch;
-                } else { line += ch; }
+                if (ctx.measureText(line + ch).width > maxW && line) { lines.push(line); line = ch; }
+                else { line += ch; }
             }
             lines.push(line || '');
         }
         return lines.length ? lines : ['—'];
     }
 
-    // ── 第一遍：计算总高度 ──
     const probe = document.createElement('canvas').getContext('2d');
     const keys  = CONFIG.FIELDS_TO_SHOW.length ? CONFIG.FIELDS_TO_SHOW : Object.keys(app.fields);
-
-    let H = PAD + 10
-          + 36          // 顶色条
-          + 50          // 标题
-          + 22          // 日期
-          + 30          // 分割线
-          + 26          // 「确认内容」section 标题
-          + 10;
-
-    probe.font = `${SZ.label}px ${FONT}`;
+    let H = PAD + 10 + 36 + 50 + 22 + 30 + 26 + 10;
     for (const k of keys) {
         H += SZ.label + 8;
         probe.font = `${SZ.value}px ${FONT}`;
-        const n = wrapLines(probe, fmtVal(app.fields[k]), CW).length;
-        H += n * LH + 16;
+        H += wrapLines(probe, fmtVal(app.fields[k]), CW).length * LH + 16;
     }
-    H += 28;  // 分割线
-
+    H += 28;
     const sigCanvas = document.getElementById('sigCanvas');
     const sigRect   = sigCanvas.getBoundingClientRect();
-    const sigW      = Math.min(CW, 420);
-    const sigH      = Math.round(sigW * (sigRect.height / Math.max(sigRect.width, 1)));
-    H += 26 + 10 + sigH + 20 + 26 + PAD + 10;  // 签名 section
+    const sigW = Math.min(CW, 420);
+    const sigH = Math.round(sigW * (sigRect.height / Math.max(sigRect.width, 1)));
+    H += 26 + 10 + sigH + 20 + 26 + PAD + 10;
 
-    // ── 第二遍：绘制 ──
     const canvas = document.createElement('canvas');
-    const SCALE  = 2;
-    canvas.width  = W * SCALE;
-    canvas.height = H * SCALE;
+    canvas.width  = W * 2; canvas.height = H * 2;
     const ctx = canvas.getContext('2d');
-    ctx.scale(SCALE, SCALE);
+    ctx.scale(2, 2);
 
-    // 背景
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W, H);
-
-    // 顶部绿色条
-    ctx.fillStyle = '#00b96b';
-    ctx.fillRect(0, 0, W, 6);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#00b96b'; ctx.fillRect(0, 0, W, 6);
 
     let y = 6 + PAD;
-
-    // 标题
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#1a1a1a';
+    ctx.textAlign = 'center'; ctx.fillStyle = '#1a1a1a';
     ctx.font = `bold ${SZ.title + 4}px ${FONT}`;
-    ctx.fillText(CONFIG.DOC_TITLE, W / 2, y + 28);
-    y += 52;
+    ctx.fillText(CONFIG.DOC_TITLE, W / 2, y + 28); y += 52;
 
-    // 日期
-    ctx.font = `${SZ.small}px ${FONT}`;
-    ctx.fillStyle = '#999';
-    ctx.fillText(
-        new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-        W / 2, y
-    );
+    ctx.font = `${SZ.small}px ${FONT}`; ctx.fillStyle = '#999';
+    ctx.fillText(new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }), W/2, y);
     y += 26;
 
-    // 分割线
     ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
-    y += 22;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke(); y += 22;
 
-    // 「确认内容」section 标题
-    ctx.textAlign = 'left';
-    ctx.font = `bold ${SZ.section}px ${FONT}`;
-    ctx.fillStyle = '#00b96b';
-    ctx.fillText('📄 Confirmation Details', PAD, y);
-    y += 22;
+    ctx.textAlign = 'left'; ctx.font = `bold ${SZ.section}px ${FONT}`; ctx.fillStyle = '#00b96b';
+    ctx.fillText('Confirmation Details', PAD, y); y += 22;
 
-    // 各字段
     for (const k of keys) {
-        // 字段名
-        ctx.font = `${SZ.label}px ${FONT}`;
-        ctx.fillStyle = '#999';
-        ctx.fillText(k, PAD, y);
-        y += SZ.label + 8;
-
-        // 字段值（换行）
-        ctx.font = `${SZ.value}px ${FONT}`;
-        ctx.fillStyle = '#1a1a1a';
-        const lines = wrapLines(ctx, fmtVal(app.fields[k]), CW);
-        for (const line of lines) { ctx.fillText(line, PAD, y); y += LH; }
+        ctx.font = `${SZ.label}px ${FONT}`; ctx.fillStyle = '#999';
+        ctx.fillText(k, PAD, y); y += SZ.label + 8;
+        ctx.font = `${SZ.value}px ${FONT}`; ctx.fillStyle = '#1a1a1a';
+        for (const line of wrapLines(ctx, fmtVal(app.fields[k]), CW)) { ctx.fillText(line, PAD, y); y += LH; }
         y += 10;
     }
-
     y += 10;
 
-    // 分割线
     ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
-    y += 22;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke(); y += 22;
 
-    // 「Sign」section 标题
-    ctx.font = `bold ${SZ.section}px ${FONT}`;
-    ctx.fillStyle = '#00b96b';
-    ctx.fillText('✍️ Employee Signature', PAD, y);
-    y += 14;
+    ctx.font = `bold ${SZ.section}px ${FONT}`; ctx.fillStyle = '#00b96b';
+    ctx.fillText('Employee Signature', PAD, y); y += 14;
 
-    // 绘制签名图
     ctx.drawImage(sigCanvas, PAD, y, sigW, sigH);
-    // 签名边框
-    ctx.strokeStyle = '#d0d8e8'; ctx.lineWidth = 1;
-    ctx.strokeRect(PAD, y, sigW, sigH);
+    ctx.strokeStyle = '#d0d8e8'; ctx.lineWidth = 1; ctx.strokeRect(PAD, y, sigW, sigH);
     y += sigH + 18;
 
-    // 签署时间
-    ctx.font = `${SZ.small + 1}px ${FONT}`;
-    ctx.fillStyle = '#aaa';
-    ctx.fillText(`Signed on: ${new Date().toLocaleString('en-US')}`, PAD, y);
-    y += 24;
+    ctx.font = `${SZ.small+1}px ${FONT}`; ctx.fillStyle = '#aaa';
+    ctx.fillText(`Signed on: ${new Date().toLocaleString('en-US')}`, PAD, y); y += 24;
 
-    // 底部绿线
     ctx.strokeStyle = '#00b96b'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
 
     return canvas;
 }
 
-/* ──────────────────────────────────────────────
-   提交签署
-────────────────────────────────────────────── */
 async function handleSubmit() {
     if (!app.sig.hasContent) {
         showToast('Please complete your signature first');
         document.getElementById('sigCanvas').scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
-
     try {
         setProcessing('Generating confirmation image...');
         const composed = composeImage();
         const blob = await new Promise(res => composed.toBlob(res, 'image/png', 1.0));
-
-        const ts       = Date.now();
-        const filename = `signature_confirmation_${app.recordId}_${ts}.png`;
+        const filename = `signature_${app.recordId}_${Date.now()}.png`;
 
         setProcessing('Uploading image...');
         const fileToken = await uploadFile(blob, filename);
@@ -794,7 +487,6 @@ async function handleSubmit() {
         setProcessing(null);
         localStorage.removeItem('lark_record_id');
         showScreen('successScreen');
-
     } catch (err) {
         setProcessing(null);
         console.error('[Sign failed]', err);
@@ -802,31 +494,24 @@ async function handleSubmit() {
     }
 }
 
-/* ──────────────────────────────────────────────
-   主初始化流程
-────────────────────────────────────────────── */
 async function main() {
-    // ── 配置检查 ──
-    if (!CONFIG.APP_ID || !CONFIG.APP_SECRET || !CONFIG.REDIRECT_URI ||
-        !CONFIG.APP_TOKEN || !CONFIG.TABLE_ID) {
-        showError('Page not configured. Please ask your administrator to fill in all required fields in the CONFIG section of the HTML file.');
+    if (!CONFIG.APP_ID || !CONFIG.REDIRECT_URI || !CONFIG.APP_TOKEN || !CONFIG.TABLE_ID) {
+        showError('Page not configured. Please contact your administrator.');
         return;
     }
 
     const params = new URLSearchParams(location.search);
-    const code   = params.get('code');
-    const rid    = params.get('record_id');
+    const code = params.get('code');
+    const rid  = params.get('record_id');
 
-    // 保存 record_id（OAuth 回跳后 URL 中不再携带）
     if (rid) localStorage.setItem('lark_record_id', rid);
 
     app.recordId = localStorage.getItem('lark_record_id');
     if (!app.recordId) {
-        showError('Invalid link: missing record_id parameter. Please open this page through the correct link.');
+        showError('Invalid link: missing record_id. Please open this page through the correct link.');
         return;
     }
 
-    // ── 处理 OAuth 回调 ──
     if (code) {
         try {
             await exchangeToken(code);
@@ -834,10 +519,10 @@ async function main() {
             showError(`Authentication failed: ${err.message}`);
             return;
         }
-        // 清理 URL 中的 OAuth 参数
-        history.replaceState({}, document.title, CONFIG.REDIRECT_URI);
+        // 清理 URL，保留 record_id
+        history.replaceState({}, document.title,
+            `${CONFIG.REDIRECT_URI}?record_id=${app.recordId}`);
     } else {
-        // 检查本地缓存的 token
         const saved  = localStorage.getItem('lark_token');
         const expiry = localStorage.getItem('lark_expiry');
         if (saved && expiry && Date.now() < Number(expiry)) {
@@ -850,7 +535,6 @@ async function main() {
         }
     }
 
-    // ── 读取记录 ──
     try {
         await fetchRecord();
     } catch (err) {
@@ -858,15 +542,9 @@ async function main() {
         return;
     }
 
-    // ── 渲染主页面 ──
     renderFields();
     showScreen('mainScreen');
-
-    // Canvas 需在 DOM 渲染完成后初始化
-    requestAnimationFrame(() => {
-        requestAnimationFrame(initCanvas);
-    });
-
+    requestAnimationFrame(() => requestAnimationFrame(initCanvas));
     document.getElementById('submitBtn').addEventListener('click', handleSubmit);
 }
 
