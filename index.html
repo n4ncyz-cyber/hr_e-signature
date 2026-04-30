@@ -315,27 +315,31 @@
    配置区 — 部署前请填写以下所有值
 ────────────────────────────────────────────── */
 const CONFIG = {
-    // Lark 应用凭证（注意：APP_SECRET 存在客户端，仅适用于内部员工工具）
-    APP_ID:       '',    // e.g. "cli_a1b2c3d4e5f6"
-    APP_SECRET:   '',    // e.g. "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
-    // GitHub Pages 回调地址（必须与 Lark 应用后台填写的完全一致，末尾不要带 /）
-    REDIRECT_URI: '',    // e.g. "https://yourname.github.io/hr-sign"
-
-    // Lark Base 信息
-    APP_TOKEN:  '',      // Base URL 中的 app_token，e.g. "bascxxxxxxxxxxxxxxxx"
-    TABLE_ID:   '',      // 表格 ID，e.g. "tblxxxxxxxxxxxxxxxx"
-
-    // 展示给员工核对的字段名（与 Base 列名完全一致）
-    FIELDS_TO_SHOW: ['Manager Comments经理评语', 'Total Score'],
-
-    // 功能字段名
-    SIGNATURE_FIELD: '签名图片',   // 附件类型字段，用于存放签名图片
-    STATUS_FIELD:    '签署状态',   // 单选 / 文本字段
-    STATUS_VALUE:    '已签署',    // 签署后写入的状态值
-
-    // 合成图片标题
-    DOC_TITLE: '员工绩效确认书',
+  APP_ID:       'cli_a97842ce87f8deef',
+  APP_SECRET:   '8za2d4G1z1V5K9uVx8KUQd5xQNIvQJVW,
+  REDIRECT_URI: 'https://n4ncyz-cyber.github.io/hr-E-signature/',
+  APP_TOKEN:    'Azh3b2KNraEmfLsL0dila3whgrg',
+  TABLE_ID:     'tblCxnbQFjtnSBSp',
+  FIELDS_TO_SHOW: [
+    'Total Score',
+    'Attendance & Punctuality出勤与守时',
+    'Job Knowledge业务知识',
+    'Dependability & Initiative可靠性与主动性',
+    'Time Management & Deadline Adherence 时间管理与按期交付',
+    'Problem Solving & Judgment问题解决与判断力',
+    'Communication & Comprehension沟通与理解力',
+    'Ownership & Accountability责任感与担当',
+    '职业操守与协作 Professional Conduct & Collaboration',
+    'Learning & Growth学习与成长',
+    'Role KPI #1 -岗位 KPI #1',
+    'Role KPI #2 -岗位 KPI #2',
+    'Role KPI #3 -岗位 KPI #3',
+    'Manager Comments经理评语',
+  ],
+  SIGNATURE_FIELD: 'Signature Image',
+  STATUS_FIELD:    'Signing Status',
+  STATUS_VALUE:    'Signed',
+  DOC_TITLE:       'Employee Performance Review',
 };
 
 /* ──────────────────────────────────────────────
