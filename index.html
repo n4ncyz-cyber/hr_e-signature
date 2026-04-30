@@ -433,7 +433,7 @@ function redirectToAuth() {
     const q = new URLSearchParams({
         app_id:       CONFIG.APP_ID,
         redirect_uri: CONFIG.REDIRECT_URI,
-        scope: 'contact:user.base:readonly',
+        scope: 'bitable:app bitable:app:readonly drive:file',
         state:        st,
     });
     location.href = `https://open.larksuite.com/open-apis/authen/v1/authorize?${q}`;
