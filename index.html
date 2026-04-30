@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>员工签署确认</title>
+    <title>Employee Signature Confirmation</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -238,7 +238,7 @@
 ═══════════════════════════════════════════════ -->
 <div id="loadingScreen" class="screen active">
     <div class="spinner"></div>
-    <p id="loadingText">初始化中…</p>
+    <p id="loadingText">Initializing...</p>
 </div>
 
 <!-- ═══════════════════════════════════════════════
@@ -246,9 +246,9 @@
 ═══════════════════════════════════════════════ -->
 <div id="errorScreen" class="screen">
     <div class="error-circle">✕</div>
-    <h2>出现错误</h2>
+    <h2>An Error Occurred</h2>
     <p id="errorMsg"></p>
-    <button class="btn btn-ghost" style="margin-top:4px" onclick="location.reload()">重新加载</button>
+    <button class="btn btn-ghost" style="margin-top:4px" onclick="location.reload()">Reload</button>
 </div>
 
 <!-- ═══════════════════════════════════════════════
@@ -257,14 +257,14 @@
 <div id="mainScreen" class="screen">
     <div class="page-wrap">
         <div class="page-header">
-            <h1>📋 员工信息确认</h1>
-            <p>请仔细核对以下内容，确认无误后完成手写签名</p>
+            <h1>📋 Employee Confirmation</h1>
+            <p>Please review the information below and complete your handwritten signature</p>
         </div>
 
         <!-- Fields card -->
         <div class="card">
             <div class="card-title">
-                <span>📄</span><span>确认内容</span>
+                <span>📄</span><span>Confirmation Details</span>
             </div>
             <div id="fieldsContainer"></div>
         </div>
@@ -272,22 +272,22 @@
         <!-- Signature card -->
         <div class="card">
             <div class="card-title">
-                <span>✍️</span><span>员工签名</span>
+                <span>✍️</span><span>Employee Signature</span>
             </div>
-            <p class="sig-hint">请在下方白色区域内，使用手指或鼠标完成手写签名</p>
+            <p class="sig-hint">Please sign in the area below using your finger or mouse</p>
             <div class="canvas-wrap">
                 <canvas id="sigCanvas"></canvas>
-                <div class="canvas-placeholder" id="sigPlaceholder">请在此处签名</div>
+                <div class="canvas-placeholder" id="sigPlaceholder">Sign here</div>
             </div>
-            <button class="btn btn-ghost" id="clearBtn" style="font-size:13px;padding:8px 14px;">🗑 清除重签</button>
+            <button class="btn btn-ghost" id="clearBtn" style="font-size:13px;padding:8px 14px;">🗑 Clear & Re-sign</button>
         </div>
 
         <!-- Submit card -->
         <div class="card" style="margin-bottom:0">
-            <button class="btn btn-submit" id="submitBtn">确认签署</button>
+            <button class="btn btn-submit" id="submitBtn">Confirm & Sign</button>
             <div class="processing-row" id="processingRow">
                 <div class="spinner" style="width:15px;height:15px;border-width:2px;flex-shrink:0"></div>
-                <span id="processingMsg">处理中…</span>
+                <span id="processingMsg">Processing...</span>
             </div>
         </div>
     </div>
@@ -298,8 +298,8 @@
 ═══════════════════════════════════════════════ -->
 <div id="successScreen" class="screen">
     <div class="success-circle">✓</div>
-    <h2>签署完成！</h2>
-    <p>您已成功完成签署<br>确认图片已保存至记录中</p>
+    <h2>Signing Complete!</h2>
+    <p>Your signature has been recorded.<br>The confirmation image has been saved.</p>
 </div>
 
 <!-- Toast -->
@@ -317,7 +317,7 @@
 const CONFIG = {
   APP_ID:       'cli_a97842ce87f8deef',
   APP_SECRET:   '8za2d4G1z1V5K9uVx8KUQd5xQNIvQJVW,
-  REDIRECT_URI: 'https://n4ncyz-cyber.github.io/hr-e-signature/',
+  REDIRECT_URI: 'https://n4ncyz-cyber.github.io/hr_e-signature/',
   APP_TOKEN:    'Azh3b2KNraEmfLsL0dila3whgrg',
   TABLE_ID:     'tblCxnbQFjtnSBSp',
   FIELDS_TO_SHOW: [
@@ -402,11 +402,11 @@ function fmtVal(v) {
         // 富文本段落 [{type, text}, ...]
         if ('type' in f && 'text' in f) return v.map(s => s.text || '').join('');
         // 人员字段 [{name, id, ...}]
-        if ('name' in f) return v.map(p => p.name || p.en_name || p.id).join('、');
-        // 选项字段 [{text, color, ...}]
-        if ('text' in f) return v.map(o => o.text).join('、');
+        if ('name' in f) return v.map(p => p.name || p.en_name || p.id).join(', ');
+        // Select fields [{text, color, ...}]
+        if ('text' in f) return v.map(o => o.text).join(', ');
         // 附件字段
-        if ('file_token' in f) return `[${v.length} 个附件]`;
+        if ('file_token' in f) return `[${v.length} attachment(s)]`;
         return v.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(', ');
     }
 
@@ -417,10 +417,10 @@ function fmtVal(v) {
     }
 
     if (typeof v === 'number') {
-        if (v > 1e12) return new Date(v).toLocaleDateString('zh-CN');   // 日期时间戳
+        if (v > 1e12) return new Date(v).toLocaleDateString('en-US');   // date timestamp
         return String(v);
     }
-    if (typeof v === 'boolean') return v ? '是' : '否';
+    if (typeof v === 'boolean') return v ? 'Yes' : 'No';
     return String(v);
 }
 
@@ -444,7 +444,7 @@ function redirectToAuth() {
    流程：code → app_access_token → user_access_token
 ────────────────────────────────────────────── */
 async function exchangeToken(code) {
-    setLoadingText('正在验证身份…');
+    setLoadingText('Verifying identity...');
 
     // Step 1: 获取 app_access_token
     const r1 = await fetch(
@@ -456,7 +456,7 @@ async function exchangeToken(code) {
         }
     );
     const d1 = await r1.json();
-    if (d1.code !== 0) throw new Error(`获取 App Token 失败：${d1.msg || d1.code}`);
+    if (d1.code !== 0) throw new Error(`Failed to get App Token: ${d1.msg || d1.code}`);
 
     // Step 2: 用 code 换取 user_access_token
     const r2 = await fetch(
@@ -471,7 +471,7 @@ async function exchangeToken(code) {
         }
     );
     const d2 = await r2.json();
-    if (d2.code !== 0) throw new Error(`获取用户 Token 失败：${d2.msg || d2.code}`);
+    if (d2.code !== 0) throw new Error(`Failed to get User Token: ${d2.msg || d2.code}`);
 
     const { access_token, expires_in } = d2.data;
     app.token = access_token;
@@ -483,7 +483,7 @@ async function exchangeToken(code) {
    Lark Base — 读取记录
 ────────────────────────────────────────────── */
 async function fetchRecord() {
-    setLoadingText('正在读取记录…');
+    setLoadingText('Loading record...');
     const url = [
         'https://open.larksuite.com/open-apis/bitable/v1/apps',
         CONFIG.APP_TOKEN, 'tables', CONFIG.TABLE_ID, 'records', app.recordId,
@@ -498,10 +498,10 @@ async function fetchRecord() {
         redirectToAuth();
         return;
     }
-    if (!r.ok) throw new Error(`读取记录失败（HTTP ${r.status}）`);
+    if (!r.ok) throw new Error(`Failed to load record (HTTP ${r.status})`);
 
     const d = await r.json();
-    if (d.code !== 0) throw new Error(`读取记录失败：${d.msg || d.code}`);
+    if (d.code !== 0) throw new Error(`Failed to load record: ${d.msg || d.code}`);
     app.fields = d.data.fields || {};
 }
 
@@ -521,7 +521,7 @@ async function uploadFile(blob, filename) {
         { method: 'POST', headers: { Authorization: `Bearer ${app.token}` }, body: fd }
     );
     const d = await r.json();
-    if (d.code !== 0) throw new Error(`上传文件失败：${d.msg || d.code}`);
+    if (d.code !== 0) throw new Error(`Failed to upload file: ${d.msg || d.code}`);
     return d.data.file_token;
 }
 
@@ -547,7 +547,7 @@ async function patchRecord(fileToken, filename) {
         body:    JSON.stringify(body),
     });
     const d = await r.json();
-    if (d.code !== 0) throw new Error(`更新记录失败：${d.msg || d.code}`);
+    if (d.code !== 0) throw new Error(`Failed to update record: ${d.msg || d.code}`);
 }
 
 /* ──────────────────────────────────────────────
@@ -716,7 +716,7 @@ function composeImage() {
     ctx.font = `${SZ.small}px ${FONT}`;
     ctx.fillStyle = '#999';
     ctx.fillText(
-        new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
+        new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         W / 2, y
     );
     y += 26;
@@ -730,7 +730,7 @@ function composeImage() {
     ctx.textAlign = 'left';
     ctx.font = `bold ${SZ.section}px ${FONT}`;
     ctx.fillStyle = '#00b96b';
-    ctx.fillText('📄 确认内容', PAD, y);
+    ctx.fillText('📄 Confirmation Details', PAD, y);
     y += 22;
 
     // 各字段
@@ -756,10 +756,10 @@ function composeImage() {
     ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
     y += 22;
 
-    // 「员工签名」section 标题
+    // 「Sign」section 标题
     ctx.font = `bold ${SZ.section}px ${FONT}`;
     ctx.fillStyle = '#00b96b';
-    ctx.fillText('✍️ 员工签名', PAD, y);
+    ctx.fillText('✍️ Employee Signature', PAD, y);
     y += 14;
 
     // 绘制签名图
@@ -772,7 +772,7 @@ function composeImage() {
     // 签署时间
     ctx.font = `${SZ.small + 1}px ${FONT}`;
     ctx.fillStyle = '#aaa';
-    ctx.fillText(`签署时间：${new Date().toLocaleString('zh-CN')}`, PAD, y);
+    ctx.fillText(`Signed on: ${new Date().toLocaleString('en-US')}`, PAD, y);
     y += 24;
 
     // 底部绿线
@@ -787,23 +787,23 @@ function composeImage() {
 ────────────────────────────────────────────── */
 async function handleSubmit() {
     if (!app.sig.hasContent) {
-        showToast('请先在签名框内完成手写签名');
+        showToast('Please complete your signature first');
         document.getElementById('sigCanvas').scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
 
     try {
-        setProcessing('正在生成确认图片…');
+        setProcessing('Generating confirmation image...');
         const composed = composeImage();
         const blob = await new Promise(res => composed.toBlob(res, 'image/png', 1.0));
 
         const ts       = Date.now();
-        const filename = `签署确认_${app.recordId}_${ts}.png`;
+        const filename = `signature_confirmation_${app.recordId}_${ts}.png`;
 
-        setProcessing('正在上传图片…');
+        setProcessing('Uploading image...');
         const fileToken = await uploadFile(blob, filename);
 
-        setProcessing('正在保存记录…');
+        setProcessing('Saving record...');
         await patchRecord(fileToken, filename);
 
         setProcessing(null);
@@ -812,8 +812,8 @@ async function handleSubmit() {
 
     } catch (err) {
         setProcessing(null);
-        console.error('[签署失败]', err);
-        showToast(`签署失败：${err.message}`, 5000);
+        console.error('[Sign failed]', err);
+        showToast(`Signing failed: ${err.message}`, 5000);
     }
 }
 
@@ -824,7 +824,7 @@ async function main() {
     // ── 配置检查 ──
     if (!CONFIG.APP_ID || !CONFIG.APP_SECRET || !CONFIG.REDIRECT_URI ||
         !CONFIG.APP_TOKEN || !CONFIG.TABLE_ID) {
-        showError('页面尚未配置完成，请联系管理员在 HTML 文件顶部填写 CONFIG 中的所有必填项。');
+        showError('Page not configured. Please ask your administrator to fill in all required fields in the CONFIG section of the HTML file.');
         return;
     }
 
@@ -837,7 +837,7 @@ async function main() {
 
     app.recordId = localStorage.getItem('lark_record_id');
     if (!app.recordId) {
-        showError('链接无效：缺少 record_id 参数，请通过正确的链接访问此页面。');
+        showError('Invalid link: missing record_id parameter. Please open this page through the correct link.');
         return;
     }
 
@@ -846,7 +846,7 @@ async function main() {
         try {
             await exchangeToken(code);
         } catch (err) {
-            showError(`身份验证失败：${err.message}`);
+            showError(`Authentication failed: ${err.message}`);
             return;
         }
         // 清理 URL 中的 OAuth 参数
@@ -869,7 +869,7 @@ async function main() {
     try {
         await fetchRecord();
     } catch (err) {
-        showError(`读取记录失败：${err.message}`);
+        showError(`Failed to load record: ${err.message}`);
         return;
     }
 
@@ -886,8 +886,8 @@ async function main() {
 }
 
 main().catch(err => {
-    console.error('[初始化错误]', err);
-    showError(`初始化失败：${err.message}`);
+    console.error('[Init error]', err);
+    showError(`Initialization failed: ${err.message}`);
 });
 </script>
 </body>
