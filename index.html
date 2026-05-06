@@ -17,7 +17,7 @@
         #loadingScreen { align-items: center; justify-content: center; gap: 16px; background: #f0f2f5; }
         .spinner {
             width: 40px; height: 40px;
-            border: 3px solid #d9d9d9; border-top-color: #00b96b;
+            border: 3px solid #d9d9d9; border-top-color: #1677ff;
             border-radius: 50%; animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -78,10 +78,10 @@
         .btn-ghost:hover { background: #ebebeb; }
         .btn-submit {
             width: 100%; padding: 15px; font-size: 16px; font-weight: 600;
-            background: #00b96b; color: #fff; border-radius: 10px;
-            box-shadow: 0 4px 14px rgba(0,185,107,0.28);
+            background: #1677ff; color: #fff; border-radius: 10px;
+            box-shadow: 0 4px 14px rgba(22,119,255,0.28);
         }
-        .btn-submit:hover:not(:disabled) { background: #00a860; }
+        .btn-submit:hover:not(:disabled) { background: #0958d9; }
         .btn-submit:disabled { background: #b0b0b0; box-shadow: none; cursor: not-allowed; }
         .processing-row {
             display: none; align-items: center; justify-content: center;
@@ -94,9 +94,9 @@
         }
         .success-circle {
             width: 80px; height: 80px; border-radius: 50%;
-            background: #00b96b; color: #fff; font-size: 38px;
+            background: #1677ff; color: #fff; font-size: 38px;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 6px 20px rgba(0,185,107,0.36);
+            box-shadow: 0 6px 20px rgba(22,119,255,0.36);
         }
         #successScreen h2 { font-size: 22px; color: #1a1a1a; }
         #successScreen p { font-size: 14px; color: #777; line-height: 1.7; }
@@ -184,7 +184,7 @@ const CONFIG = {
     'Problem Solving & Judgment问题解决与判断力',
     'Communication & Comprehension沟通与理解力',
     'Ownership & Accountability责任感与担当',
-    'Professional Conduct & Collaboration职业操守与协作',
+    '职业操守与协作 Professional Conduct & Collaboration',
     'Learning & Growth学习与成长',
     'Role KPI #1 -岗位 KPI #1',
     'Role KPI #2 -岗位 KPI #2',
@@ -423,7 +423,7 @@ function composeImage() {
     ctx.scale(2, 2);
 
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#00b96b'; ctx.fillRect(0, 0, W, 6);
+    ctx.fillStyle = '#1677ff'; ctx.fillRect(0, 0, W, 6);
 
     let y = 6 + PAD;
     ctx.textAlign = 'center'; ctx.fillStyle = '#1a1a1a';
@@ -437,7 +437,7 @@ function composeImage() {
     ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke(); y += 22;
 
-    ctx.textAlign = 'left'; ctx.font = `bold ${SZ.section}px ${FONT}`; ctx.fillStyle = '#00b96b';
+    ctx.textAlign = 'left'; ctx.font = `bold ${SZ.section}px ${FONT}`; ctx.fillStyle = '#1677ff';
     ctx.fillText('Confirmation Details', PAD, y); y += 22;
 
     for (const k of keys) {
@@ -452,7 +452,7 @@ function composeImage() {
     ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke(); y += 22;
 
-    ctx.font = `bold ${SZ.section}px ${FONT}`; ctx.fillStyle = '#00b96b';
+    ctx.font = `bold ${SZ.section}px ${FONT}`; ctx.fillStyle = '#1677ff';
     ctx.fillText('Employee Signature', PAD, y); y += 14;
 
     ctx.drawImage(sigCanvas, PAD, y, sigW, sigH);
@@ -462,7 +462,7 @@ function composeImage() {
     ctx.font = `${SZ.small+1}px ${FONT}`; ctx.fillStyle = '#aaa';
     ctx.fillText(`Signed on: ${new Date().toLocaleString('en-US')}`, PAD, y); y += 24;
 
-    ctx.strokeStyle = '#00b96b'; ctx.lineWidth = 3;
+    ctx.strokeStyle = '#1677ff'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
 
     return canvas;
