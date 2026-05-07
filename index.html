@@ -278,7 +278,7 @@ async function fetchRecord() {
     const r = await fetch(`${CONFIG.WORKER_URL}/proxy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lark_url, method: 'GET', token: app.token }),
+        body: JSON.stringify({ lark_url, method: 'GET' }),
     });
     const d = await r.json();
     if (d.code !== 0) throw new Error(`Failed to load record: ${d.msg || d.code}`);
@@ -316,7 +316,7 @@ async function patchRecord(fileToken, filename) {
     const r = await fetch(`${CONFIG.WORKER_URL}/proxy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lark_url, method: 'PUT', body, token: app.token }),
+        body: JSON.stringify({ lark_url, method: 'PUT', body }),
     });
     const d = await r.json();
     if (d.code !== 0) throw new Error(`Failed to update record: ${d.msg || d.code}`);
