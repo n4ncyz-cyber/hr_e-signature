@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Employee Signature Confirmation</title>
+    <title>Signature Confirmation</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -139,7 +139,7 @@
             <div id="fieldsContainer"></div>
         </div>
         <div class="card">
-            <div class="card-title"><span>✍️</span><span>Employee Signature</span></div>
+            <div class="card-title"><span>✍️</span><span>Signature</span></div>
             <p class="sig-hint">Please sign in the area below using your finger or mouse</p>
             <div class="canvas-wrap">
                 <canvas id="sigCanvas"></canvas>
@@ -191,8 +191,8 @@ const CONFIG = {
     'Learning & Growth学习与成长',
     'Manager Comments经理评语',
   ],
-  SIGNATURE_FIELD: 'Signature Image',
-  STATUS_FIELD:    'Signing Status',
+  SIGNATURE_FIELD: 'Manager Signature Image',
+  STATUS_FIELD:    'Manager Signing Status',
   STATUS_VALUE:    'Signed',
   DOC_TITLE:       'Employee Performance Review',
 };
@@ -453,7 +453,7 @@ function composeImage() {
     ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke(); y += 22;
 
     ctx.font = `bold ${SZ.section}px ${FONT}`; ctx.fillStyle = '#1677ff';
-    ctx.fillText('Employee Signature', PAD, y); y += 14;
+    ctx.fillText('Signature', PAD, y); y += 14;
 
     ctx.drawImage(sigCanvas, PAD, y, sigW, sigH);
     ctx.strokeStyle = '#d0d8e8'; ctx.lineWidth = 1; ctx.strokeRect(PAD, y, sigW, sigH);
