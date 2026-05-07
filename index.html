@@ -175,30 +175,52 @@ const CONFIG = {
   WORKER_URL:   'https://lark-auth.n4ncyz.workers.dev',
   APP_TOKEN:    'Azh3b2KNraEmfLsL0dila3whgrg',
   TABLE_ID:     'tblCxnbQFjtnSBSp',
-  FIELDS_TO_SHOW: [
-      'Full Name',
-      'Years',
-    'Total Score',
-    'Attendance & Punctuality出勤与守时',
-    'Job Knowledge业务知识',
-    'Quality & Effectiveness of Work工作质量与有效性',
-    'Dependability & Initiative可靠性与主动性',
-    'Time Management & Deadline Adherence 时间管理与按期交付',
-    'Problem Solving & Judgment问题解决与判断力',
-    'Communication & Comprehension沟通与理解力',
-    'Ownership & Accountability责任感与担当',
-    'Professional Conduct & Collaboration职业操守与协作',
-    'Learning & Growth学习与成长',
-    'Manager Comments经理评语',
-  ],
-  SIGNATURE_FIELD: 'Manager Signature Image',
-  STATUS_FIELD:    'Manager Signing Status',
-  STATUS_VALUE:    'Signed',
-  DOC_TITLE:       'Employee Performance Review',
+  ROLES: {
+    manager: {
+      SIGNATURE_FIELD: 'Manager Signature',
+      STATUS_FIELD:    'Manager Signing Status',
+      STATUS_VALUE:    'Signed',
+      DOC_TITLE:       'Manager Confirmation',
+      FIELDS_TO_SHOW:  [
+        'Full Name',
+        'Total Score',
+        'Attendance & Punctuality出勤与守时',
+        'Job Knowledge业务知识',
+        'Dependability & Initiative可靠性与主动性',
+        'Time Management & Deadline Adherence 时间管理与按期交付',
+        'Problem Solving & Judgment问题解决与判断力',
+        'Communication & Comprehension沟通与理解力',
+        'Ownership & Accountability责任感与担当',
+        'Professional Conduct & Collaboration职业操守与协作',
+        'Learning & Growth学习与成长',
+        'Manager Comments经理评语',
+      ],
+    },
+    employee: {
+      SIGNATURE_FIELD: 'Employee Signature',
+      STATUS_FIELD:    'Employee Signing Status',
+      STATUS_VALUE:    'Signed',
+      DOC_TITLE:       'Employee Performance Review',
+      FIELDS_TO_SHOW:  [
+        'Full Name',
+        'Total Score',
+        'Attendance & Punctuality出勤与守时',
+        'Job Knowledge业务知识',
+        'Dependability & Initiative可靠性与主动性',
+        'Time Management & Deadline Adherence 时间管理与按期交付',
+        'Problem Solving & Judgment问题解决与判断力',
+        'Communication & Comprehension沟通与理解力',
+        'Ownership & Accountability责任感与担当',
+        'Professional Conduct & Collaboration职业操守与协作',
+        'Learning & Growth学习与成长',
+        'Manager Comments经理评语',
+      ],
+    },
+  },
 };
 
 const app = {
-    token: null, recordId: null, fields: {},
+    token: null, recordId: null, fields: {}, roleConfig: null,
     sig: { ctx: null, drawing: false, hasContent: false, lastX: 0, lastY: 0 },
 };
 
@@ -309,8 +331,8 @@ async function patchRecord(fileToken, filename) {
     ].join('/');
     const body = {
         fields: {
-            [CONFIG.SIGNATURE_FIELD]: [{ file_token: fileToken, name: filename }],
-            [CONFIG.STATUS_FIELD]: CONFIG.STATUS_VALUE,
+            [app.roleConfig.SIGNATURE_FIELD]: [{ file_token: fileToken, name: filename }],
+            [app.roleConfig.STATUS_FIELD]: app.roleConfig.STATUS_VALUE,
         },
     };
     const r = await fetch(`${CONFIG.WORKER_URL}/proxy`, {
@@ -324,7 +346,7 @@ async function patchRecord(fileToken, filename) {
 
 function renderFields() {
     const container = document.getElementById('fieldsContainer');
-    const keys = CONFIG.FIELDS_TO_SHOW.length ? CONFIG.FIELDS_TO_SHOW : Object.keys(app.fields);
+    const keys = app.roleConfig.FIELDS_TO_SHOW.length ? app.roleConfig.FIELDS_TO_SHOW : Object.keys(app.fields);
     container.innerHTML = keys.map(k => `
         <div class="field-row">
             <div class="field-label">${esc(k)}</div>
@@ -403,7 +425,7 @@ function composeImage() {
     }
 
     const probe = document.createElement('canvas').getContext('2d');
-    const keys  = CONFIG.FIELDS_TO_SHOW.length ? CONFIG.FIELDS_TO_SHOW : Object.keys(app.fields);
+    const keys  = app.roleConfig.FIELDS_TO_SHOW.length ? app.roleConfig.FIELDS_TO_SHOW : Object.keys(app.fields);
     let H = PAD + 10 + 36 + 50 + 22 + 30 + 26 + 10;
     for (const k of keys) {
         H += SZ.label + 8;
@@ -428,7 +450,7 @@ function composeImage() {
     let y = 6 + PAD;
     ctx.textAlign = 'center'; ctx.fillStyle = '#1a1a1a';
     ctx.font = `bold ${SZ.title + 4}px ${FONT}`;
-    ctx.fillText(CONFIG.DOC_TITLE, W / 2, y + 28); y += 52;
+    ctx.fillText(app.roleConfig.DOC_TITLE, W / 2, y + 28); y += 52;
 
     ctx.font = `${SZ.small}px ${FONT}`; ctx.fillStyle = '#999';
     ctx.fillText(new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }), W/2, y);
@@ -505,14 +527,19 @@ async function main() {
     const params = new URLSearchParams(location.search);
     const code = params.get('code');
     const rid  = params.get('record_id');
+    const roleParam = params.get('role');
 
     if (rid) localStorage.setItem('lark_record_id', rid);
+    if (roleParam) localStorage.setItem('lark_role', roleParam);
 
     app.recordId = localStorage.getItem('lark_record_id');
     if (!app.recordId) {
         showError('Invalid link: missing record_id. Please open this page through the correct link.');
         return;
     }
+
+    const role = localStorage.getItem('lark_role') || 'employee';
+    app.roleConfig = CONFIG.ROLES[role] || CONFIG.ROLES.employee;
 
     if (code) {
         try {
@@ -521,9 +548,9 @@ async function main() {
             showError(`Authentication failed: ${err.message}`);
             return;
         }
-        // 清理 URL，保留 record_id
+        // 清理 URL，保留 record_id 和 role
         history.replaceState({}, document.title,
-            `${CONFIG.REDIRECT_URI}?record_id=${app.recordId}`);
+            `${CONFIG.REDIRECT_URI}?record_id=${app.recordId}&role=${role}`);
     } else {
         const saved  = localStorage.getItem('lark_token');
         const expiry = localStorage.getItem('lark_expiry');
